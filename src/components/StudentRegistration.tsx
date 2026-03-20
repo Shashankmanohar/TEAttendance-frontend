@@ -240,6 +240,74 @@ export function StudentRegistration() {
     }
   };
 
+  const resetForm = () => {
+    setRegisteredStudent(null);
+    setFilePreview(null);
+    form.reset({
+      name: '',
+      email: '',
+      course: '',
+      class_id: '',
+      roll_number: '',
+      parent_email: '',
+      parent_phone: '',
+      photo_url: '',
+      valid_until: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+    });
+  };
+
+  if (registeredStudent) {
+    return (
+      <div className="max-w-2xl mx-auto p-12 bg-card rounded-[40px] border border-border shadow-2xl text-center space-y-8 animate-in fade-in zoom-in duration-500">
+        <div className="flex justify-center">
+          <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center">
+            <CheckCircle2 className="w-12 h-12 text-emerald-500" />
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <h2 className="text-3xl font-black text-slate-900">Registration Complete!</h2>
+          <p className="text-slate-500 font-medium">Student {registeredStudent.name} has been successfully added to the system.</p>
+        </div>
+
+        <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 space-y-4">
+          <div className="flex justify-center">
+            <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
+              <QRCodeSVG 
+                value={JSON.stringify(registeredStudent.qr_payload)} 
+                size={160}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-black text-slate-900 uppercase tracking-widest">{registeredStudent.roll_number}</p>
+            <p className="text-xs text-slate-500 font-bold">{registeredStudent.course.toUpperCase()}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          <Button 
+            onClick={downloadQRCode}
+            className="h-14 rounded-2xl bg-slate-900 font-black text-lg shadow-xl flex items-center justify-center gap-2"
+          >
+            <Download className="w-5 h-5" />
+            Download QR Card
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={resetForm}
+            className="h-14 rounded-2xl font-black text-lg border-2 flex items-center justify-center gap-2"
+          >
+            <UserPlus className="w-5 h-5" />
+            Add Another Student
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-8 bg-card rounded-[40px] border border-border shadow-2xl">
       <div className="flex items-center gap-4 mb-8">
