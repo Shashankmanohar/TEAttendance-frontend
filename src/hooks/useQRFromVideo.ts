@@ -7,7 +7,7 @@ interface Options {
   intervalMs?: number;
 }
 
-export function useQRFromVideo({ videoRef, enabled, intervalMs = 70 }: Options) {
+export function useQRFromVideo({ videoRef, enabled, intervalMs = 40 }: Options) {
   const [detectedPayload, setDetectedPayload] = useState<StudentQRPayload | null>(null);
   const [supported, setSupported] = useState(true);
   const detectorRef = useRef<BarcodeDetector | null>(null);
