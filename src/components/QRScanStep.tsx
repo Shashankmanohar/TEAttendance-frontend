@@ -88,20 +88,28 @@ export function QRScanStep() {
     stopCamera();
 
     try {
+      console.log('Attempting to start camera with ID:', qrCameraId);
       setCameraError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: qrCameraId } }
-      });
+      
+      const constraints = qrCameraId 
+        ? { video: { deviceId: qrCameraId } } 
+        : { video: { facingMode: 'environment' } };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      console.log('QR Camera Stream acquired:', stream.id);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         setIsScanning(true);
+        // Force play just in case
+        videoRef.current.play().catch(e => console.warn('Auto-play failed:', e));
       }
     } catch (error: any) {
       console.error('QR Camera error:', error);
       if (mountedRef.current) {
-        setCameraError(error?.message || 'Failed to access QR camera');
+        setCameraError(error?.name === 'NotAllowedError' ? 'Camera permission denied' : (error?.message || 'Failed to access camera'));
         setIsScanning(false);
       }
     }
@@ -112,7 +120,7 @@ export function QRScanStep() {
     if (qrCameraId) {
       startCamera();
     } else {
-      stopCamera();
+      console.log('No QR Camera ID selected yet');
     }
     return () => { 
       mountedRef.current = false;
@@ -141,7 +149,12 @@ export function QRScanStep() {
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover scale-[1.3] brightness-110 contrast-110"
+            onPlay={() => console.log('Video playing')}
+            onLoadedMetadata={(e) => {
+              console.log('Video metadata loaded');
+              e.currentTarget.play().catch(err => console.error('Play failed:', err));
+            }}
+            className="w-full h-full object-cover"
           />
           
           <AnimatePresence>
@@ -228,36 +241,53 @@ export function QRScanStep() {
         </div>
       </div>
 
-      {/* Footer Status Card */}
-      <div className={`w-full p-8 rounded-[44px] transition-all duration-1000 shadow-2xl ${!scanResult ? 'bg-[#0f172a]' : scanResult.canEnter ? 'bg-[#8424bd]' : 'bg-red-600'} text-white flex flex-col gap-5 relative overflow-hidden group/card`}>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover/card:scale-150 transition-transform duration-1000" />
-        
-        <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-6">
-            <div className={`w-16 h-16 rounded-[24px] bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-black text-2xl tracking-tighter transition-all duration-500 ${scanResult ? 'scale-110 rotate-3 shadow-xl' : ''}`}>
-              {scanResult ? scanResult.student.name.split(' ').map(n => n[0]).join('') : '??'}
-            </div>
-            <div>
-              <h3 className="font-black text-2xl leading-none mb-2 tracking-tight">
-                {scanResult ? (scanResult.canEnter ? 'ACCESS GRANTED' : 'ACCESS DENIED') : 'READY TO SCAN'}
-              </h3>
-              <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] inline-block bg-white/10 border border-white/20 backdrop-blur-sm`}>
-                {scanResult ? scanResult.message : 'Position QR for Detection'}
+      {/* Camera Settings / Footer Info */}
+      <div className="w-full space-y-4">
+        <div className={`w-full p-8 rounded-[44px] transition-all duration-1000 shadow-2xl ${!scanResult ? 'bg-[#0f172a]' : scanResult.canEnter ? 'bg-[#8424bd]' : 'bg-red-600'} text-white flex flex-col gap-5 relative overflow-hidden group/card`}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover/card:scale-150 transition-transform duration-1000" />
+          
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex items-center gap-6">
+              <div className={`w-16 h-16 rounded-[24px] bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-black text-2xl tracking-tighter transition-all duration-500 ${scanResult ? 'scale-110 rotate-3 shadow-xl' : ''}`}>
+                {scanResult ? scanResult.student.name.split(' ').map(n => n[0]).join('') : '??'}
+              </div>
+              <div>
+                <h3 className="font-black text-2xl leading-none mb-2 tracking-tight">
+                  {scanResult ? (scanResult.canEnter ? 'ACCESS GRANTED' : 'ACCESS DENIED') : 'READY TO SCAN'}
+                </h3>
+                <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] inline-block bg-white/10 border border-white/20 backdrop-blur-sm`}>
+                  {scanResult ? scanResult.message : 'Position QR for Detection'}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="relative">
-             <QrCode className={`w-8 h-8 ${isScanning && !scanResult ? 'animate-pulse text-emerald-400' : 'text-white'}`} />
-             {scanResult && <div className="absolute inset-0 bg-white blur-xl opacity-30 animate-pulse" />}
+            <div className="relative">
+               <QrCode className={`w-8 h-8 ${isScanning && !scanResult ? 'animate-pulse text-emerald-400' : 'text-white'}`} />
+            </div>
           </div>
         </div>
-        
-        <div className="pt-5 border-t border-white/10">
-          <p className="text-[11px] text-white/60 italic font-medium leading-relaxed uppercase tracking-wider">
-            {scanResult ? 
-              (scanResult.canEnter ? '"EXCELLENCE IS NOT A SKILL. IT IS AN ATTITUDE."' : '"AUTHORIZATION FAILED. CONTACT SYSTEM ADMIN."') 
-              : '"PROCEED WITH CAUTION. SYSTEM IS RECORDING."'}
-          </p>
+
+        {/* Camera Selector and Refresh */}
+        <div className="px-6 py-4 bg-white/40 backdrop-blur-md rounded-[32px] border border-white/60 flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <CameraSelector 
+              label="SCANNER SOURCE"
+              devices={devices}
+              value={qrCameraId}
+              onChange={setQrCameraId}
+              disabled={isScanning && !cameraError}
+            />
+          </div>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => {
+              refresh();
+              startCamera();
+            }}
+            className="w-12 h-12 rounded-2xl bg-white border-slate-100 hover:bg-slate-50 text-slate-400 hover:text-[#8424bd]"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </Button>
         </div>
       </div>
 
