@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { QrCode, LayoutDashboard, UserPlus, Users, ClipboardList, Menu, X, Receipt, Database, ChevronRight } from 'lucide-react';
+import { QrCode, LayoutDashboard, UserPlus, Users, ClipboardList, Menu, X, Receipt, Database, ChevronRight, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';

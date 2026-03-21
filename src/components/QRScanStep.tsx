@@ -91,9 +91,14 @@ export function QRScanStep() {
       console.log('Attempting to start camera with ID:', qrCameraId);
       setCameraError(null);
       
-      const constraints = qrCameraId 
-        ? { video: { deviceId: qrCameraId } } 
-        : { video: { facingMode: 'environment' } };
+      const constraints = {
+        video: {
+          deviceId: qrCameraId ? { exact: qrCameraId } : undefined,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          facingMode: 'environment'
+        }
+      };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       

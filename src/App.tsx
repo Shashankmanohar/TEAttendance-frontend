@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
 import Students from "./pages/Students";
 import Logs from "./pages/Logs";
+import AttendanceStatus from "./pages/AttendanceStatus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,7 +29,7 @@ function AppLayout() {
   }, []);
 
   // Also allow manual trigger if needed, but event listener is more robust
-  const hideSidebar = isFullPage && location.pathname === '/';
+  const hideSidebar = (isFullPage && location.pathname === '/') || location.pathname === '/status';
 
   return (
     <div className="min-h-screen bg-background transition-all duration-500">
@@ -40,6 +41,7 @@ function AppLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/students" element={<Students />} />
           <Route path="/logs" element={<Logs />} />
+          <Route path="/status" element={<AttendanceStatus />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

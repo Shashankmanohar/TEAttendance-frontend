@@ -195,3 +195,12 @@
     100% { transform: translateY(200px); opacity: 0; }
   }
 }
+
+@keyframes reverse-spin {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.animate-reverse-spin {
+  animation: reverse-spin 10s linear infinite;
+}

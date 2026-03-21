@@ -73,11 +73,45 @@ export async function toggleFeeStatus(id: string): Promise<any> {
 }
 
 export async function markAttendance(payload: any): Promise<MarkAttendanceResult> {
-  const { data } = await api.post('attendance/clock-in', {
-    roll_number: payload.roll_number || payload.rollNumber || payload.studentId,
-    class_id: payload.class_id || payload.classId || 'default',
-    course: payload.course || ''
-  });
+  try {
+    const { data } = await api.post('attendance/clock-in', {
+      roll_number: payload.roll_number || payload.rollNumber || payload.studentId,
+      class_id: payload.class_id || payload.classId || 'default',
+      course: payload.course || ''
+    });
+    return data;
+  } catch (error: any) {
+    if (error.response && error.response.status === 400) {
+      return error.response.data;
+    }
+    throw error;
+  }
+}
+
+export interface AttendanceStatusResult {
+  isMarked: boolean;
+  message: string;
+  timestamp: string | null;
+  student: {
+    name: string;
+    roll_number: string;
+    photo_url?: string;
+    course: string;
+    class_id: string;
+  };
+}
+
+export async function checkAttendanceStatus(rollNumber: string): Promise<AttendanceStatusResult> {
+  const { data } = await api.get(`attendance/check-status/${rollNumber}`);
+  return data;
+}
+
+export interface LatestAttendanceResult extends AttendanceRecord {
+  student_photo: string | null;
+}
+
+export async function getLatestAttendance(): Promise<LatestAttendanceResult> {
+  const { data } = await api.get('attendance/latest');
   return data;
 }
 
