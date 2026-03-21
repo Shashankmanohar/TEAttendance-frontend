@@ -21,9 +21,9 @@ export function QRScanStep() {
   const globalCooldownRef = useRef<boolean>(false);
   const mountedRef = useRef(true);
 
-  const { detectedPayload, reset: resetQR } = useQRFromVideo({
+   const { detectedPayload, reset: resetQR } = useQRFromVideo({
     videoRef,
-    enabled: isScanning && !globalCooldownRef.current,
+    enabled: isScanning && !globalCooldownRef.current && !scanResult,
     intervalMs: 40 // Faster scanning (25 FPS)
   });
 
@@ -31,16 +31,15 @@ export function QRScanStep() {
     const studentId = payload.studentId || payload.rollNumber || payload.roll_number;
     const now = Date.now();
     
-    // 1. Per-student cooldown (3 seconds)
+    // 1. Per-student cooldown (1 second) to prevent multi-trigger from same frame burst
     const lastScanTime = studentCooldowns.current.get(studentId) || 0;
-    if (now - lastScanTime < 3000) {
-      console.log(`Student ${studentId} is on cooldown`);
+    if (now - lastScanTime < 1000) {
       resetQR();
       return;
     }
 
     // 2. Global UI cooldown (400ms) to prevent overlapping animations/requests
-    if (globalCooldownRef.current) return;
+    if (globalCooldownRef.current || scanResult) return;
     
     globalCooldownRef.current = true;
     studentCooldowns.current.set(studentId, now);
@@ -53,12 +52,13 @@ export function QRScanStep() {
       setTimeout(() => {
         if (!mountedRef.current) return;
         setScanResult(null);
+        // Clear lastRaw in useQRFromVideo so it can scan the same code again immediately if still in frame
+        resetQR();
       }, 2500);
 
       // Allow NEXT scan (global cooldown release) earlier (600ms)
       setTimeout(() => {
         globalCooldownRef.current = false;
-        resetQR(); 
       }, 600);
 
     } catch (error: any) {
@@ -66,7 +66,7 @@ export function QRScanStep() {
       globalCooldownRef.current = false;
       resetQR();
     }
-  }, [resetQR]);
+  }, [resetQR, scanResult]);
 
   // Effect to trigger attendance marking when payload detected
   useEffect(() => {
