@@ -198,19 +198,15 @@ export function QRScanStep() {
                   </div>
                 )}
                 
-                {/* Overlay status icon */}
+                {/* Overlay status icon - Always positive for student UX */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[4px]">
                    <motion.div
                      initial={{ scale: 0, rotate: -45 }}
                      animate={{ scale: 1, rotate: 0 }}
                      transition={{ type: "spring", damping: 15, stiffness: 150 }}
-                     className={`p-6 rounded-[32px] ${scanResult.canEnter ? 'bg-emerald-500' : 'bg-red-500'} shadow-[0_0_50px_rgba(0,0,0,0.3)] border-4 border-white/20`}
+                     className="p-6 rounded-[32px] bg-emerald-500 shadow-[0_0_50px_rgba(0,0,0,0.3)] border-4 border-white/20"
                    >
-                     {scanResult.canEnter ? (
-                       <CheckCircle2 className="w-16 h-16 text-white" />
-                     ) : (
-                       <XCircle className="w-16 h-16 text-white" />
-                     )}
+                     <CheckCircle2 className="w-16 h-16 text-white" />
                    </motion.div>
                 </div>
               </motion.div>
@@ -248,7 +244,7 @@ export function QRScanStep() {
 
       {/* Camera Settings / Footer Info */}
       <div className="w-full space-y-4">
-        <div className={`w-full p-8 rounded-[44px] transition-all duration-1000 shadow-2xl ${!scanResult ? 'bg-[#0f172a]' : scanResult.canEnter ? 'bg-[#8424bd]' : 'bg-red-600'} text-white flex flex-col gap-5 relative overflow-hidden group/card`}>
+        <div className={`w-full p-8 rounded-[44px] transition-all duration-1000 shadow-2xl ${!scanResult ? 'bg-[#0f172a]' : 'bg-[#8424bd]'} text-white flex flex-col gap-5 relative overflow-hidden group/card`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover/card:scale-150 transition-transform duration-1000" />
           
           <div className="flex items-center justify-between relative z-10">
@@ -258,7 +254,7 @@ export function QRScanStep() {
               </div>
               <div>
                 <h3 className="font-black text-2xl leading-none mb-2 tracking-tight">
-                  {scanResult ? (scanResult.canEnter ? 'ACCESS GRANTED' : 'ACCESS DENIED') : 'READY TO SCAN'}
+                  {scanResult ? 'SUCCESS' : 'READY TO SCAN'}
                 </h3>
                 <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] inline-block bg-white/10 border border-white/20 backdrop-blur-sm`}>
                   {scanResult ? scanResult.message : 'Position QR for Detection'}

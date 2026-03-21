@@ -112,8 +112,8 @@ export default function AttendanceStatus() {
                 {/* Content Section */}
                 <div className="flex-1 text-center md:text-left">
                   <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-black uppercase tracking-[0.3em] mb-8">
-                    <ShieldCheck className="w-4 h-4" />
-                    Verified Entry Approved
+                    <CheckCircle2 className="w-4 h-4" />
+                    Verified - Attendance Marked
                   </div>
                   
                   <motion.div
