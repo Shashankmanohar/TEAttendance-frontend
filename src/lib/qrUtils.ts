@@ -4,11 +4,13 @@ import CryptoJS from 'crypto-js';
 const SECRET_KEY = 'attendance-system-2024-secure-key';
 
 export interface StudentQRPayload {
-  studentId: string;
-  studentName: string;
+  roll_number: string;
+  class_id: string;
   course: string;
-  timestamp: number;
-  hash: string;
+  studentId?: string;
+  studentName?: string;
+  timestamp?: number;
+  hash?: string;
 }
 
 export function generateStudentPayload(
@@ -21,15 +23,20 @@ export function generateStudentPayload(
   const hash = CryptoJS.HmacSHA256(dataToHash, SECRET_KEY).toString();
 
   return {
+    roll_number: studentId, // Using studentId as roll_number for compatibility
+    class_id: 'default',
+    course,
     studentId,
     studentName,
-    course,
     timestamp,
     hash,
   };
 }
 
 export function validateQRPayload(payload: StudentQRPayload): boolean {
+  // If it has a hash, validate it. If not (backend simple format), return true
+  if (!payload.hash) return true;
+  
   const dataToHash = `${payload.studentId}-${payload.studentName}-${payload.course}-${payload.timestamp}`;
   const expectedHash = CryptoJS.HmacSHA256(dataToHash, SECRET_KEY).toString();
   return payload.hash === expectedHash;
@@ -56,14 +63,14 @@ export async function generateQRCode(payload: StudentQRPayload): Promise<string>
 export function parseQRData(data: string): StudentQRPayload | null {
   try {
     const parsed = JSON.parse(data);
-    if (
-      parsed.studentId &&
-      parsed.studentName &&
-      parsed.course &&
-      parsed.timestamp &&
-      parsed.hash
-    ) {
-      return parsed as StudentQRPayload;
+    // Be flexible: accept either roll_number or studentId
+    if (parsed.roll_number || parsed.studentId) {
+      return {
+        roll_number: parsed.roll_number || parsed.studentId,
+        class_id: parsed.class_id || '',
+        course: parsed.course || '',
+        ...parsed
+      };
     }
     return null;
   } catch {

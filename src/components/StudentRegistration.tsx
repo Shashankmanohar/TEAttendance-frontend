@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -258,39 +259,54 @@ export function StudentRegistration() {
 
   if (registeredStudent) {
     return (
-      <div className="max-w-2xl mx-auto p-12 bg-card rounded-[40px] border border-border shadow-2xl text-center space-y-8 animate-in fade-in zoom-in duration-500">
-        <div className="flex justify-center">
-          <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center">
-            <CheckCircle2 className="w-12 h-12 text-emerald-500" />
-          </div>
+      <div className="max-w-2xl mx-auto p-12 bg-white/40 backdrop-blur-3xl rounded-[48px] border border-white shadow-2xl text-center space-y-10 animate-in fade-in zoom-in duration-700 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-[#8424bd]/10 blur-3xl rounded-full -mr-20 -mt-20" />
+        
+        <div className="flex justify-center relative z-10">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", damping: 12, stiffness: 200 }}
+            className="w-28 h-28 rounded-[36px] bg-emerald-500 shadow-xl shadow-emerald-200 flex items-center justify-center border-4 border-white"
+          >
+            <CheckCircle2 className="w-14 h-14 text-white" />
+          </motion.div>
         </div>
         
-        <div className="space-y-2">
-          <h2 className="text-3xl font-black text-slate-900">Registration Complete!</h2>
-          <p className="text-slate-500 font-medium">Student {registeredStudent.name} has been successfully added to the system.</p>
+        <div className="space-y-3 relative z-10">
+          <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-none">REGISTRATION <span className="text-[#8424bd]">SUCCESS</span></h2>
+          <p className="text-slate-500 font-bold text-lg uppercase tracking-tight">System Identity Provisioned</p>
         </div>
 
-        <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 space-y-4">
+        <div className="bg-white/60 backdrop-blur-xl rounded-[40px] p-10 border border-white shadow-xl shadow-slate-200/40 space-y-6 group relative z-10 hover:-translate-y-1 transition-transform duration-500">
+           {registeredStudent.photo_url && (
+             <div className="flex justify-center mb-6">
+               <img src={registeredStudent.photo_url} className="w-32 h-32 rounded-[32px] object-cover border-4 border-white shadow-lg" alt="" />
+             </div>
+           )}
           <div className="flex justify-center">
-            <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
+            <div className="p-6 bg-white rounded-[32px] shadow-sm border border-slate-100 group-hover:scale-105 transition-transform duration-500">
               <QRCodeSVG 
                 value={JSON.stringify(registeredStudent.qr_payload)} 
-                size={160}
+                size={180}
                 level="H"
                 includeMargin={true}
               />
             </div>
           </div>
-          <div>
-            <p className="text-sm font-black text-slate-900 uppercase tracking-widest">{registeredStudent.roll_number}</p>
-            <p className="text-xs text-slate-500 font-bold">{registeredStudent.course.toUpperCase()}</p>
+          <div className="space-y-1">
+            <p className="text-xl font-black text-slate-900 tracking-tight uppercase leading-none">{registeredStudent.name}</p>
+            <div className="flex items-center justify-center gap-2">
+               <span className="text-xs font-black text-[#8424bd] bg-purple-50 px-3 py-1 rounded-full uppercase tracking-widest">{registeredStudent.roll_number}</span>
+               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{registeredStudent.course}</span>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative z-10">
           <Button 
             onClick={downloadQRCode}
-            className="h-14 rounded-2xl bg-slate-900 font-black text-lg shadow-xl flex items-center justify-center gap-2"
+            className="h-16 rounded-[24px] bg-slate-900 hover:bg-[#8424bd] text-white font-black text-xs tracking-widest uppercase shadow-2xl shadow-slate-200 transition-all active:scale-95 flex items-center justify-center gap-3"
           >
             <Download className="w-5 h-5" />
             Download QR Card
@@ -298,10 +314,10 @@ export function StudentRegistration() {
           <Button 
             variant="outline"
             onClick={resetForm}
-            className="h-14 rounded-2xl font-black text-lg border-2 flex items-center justify-center gap-2"
+            className="h-16 rounded-[24px] bg-white border-2 border-slate-100 font-black text-xs tracking-widest uppercase shadow-xl hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-3"
           >
-            <UserPlus className="w-5 h-5" />
-            Add Another Student
+            <UserPlus className="w-5 h-5 text-[#8424bd]" />
+            Add Another
           </Button>
         </div>
       </div>
@@ -309,86 +325,101 @@ export function StudentRegistration() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-8 bg-card rounded-[40px] border border-border shadow-2xl">
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center">
-          <UserPlus className="w-6 h-6 text-white" />
+    <div className="max-w-2xl mx-auto p-10 bg-white/40 backdrop-blur-3xl rounded-[48px] border border-white shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-32 h-32 bg-[#8424bd]/5 blur-3xl rounded-full -ml-16 -mt-16" />
+      
+      <div className="flex items-center gap-5 mb-10 relative z-10">
+        <div className="w-16 h-16 rounded-[24px] bg-[#8424bd] shadow-xl shadow-purple-200 flex items-center justify-center text-white">
+          <UserPlus className="w-8 h-8" />
         </div>
         <div>
-          <h2 className="text-xl font-black text-slate-900">New Registration</h2>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Team Excellent Admissions</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">ENROLL <span className="text-[#8424bd]">STUDENT</span></h2>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">Initialize Identity Management protocol</p>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 relative z-10">
           {/* Photo Upload / Capture Section */}
           <div className="relative group">
-            <div className="flex flex-col items-center justify-center min-h-[200px] border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50 hover:bg-slate-50 transition-all overflow-hidden">
+            <div className="flex flex-col items-center justify-center min-h-[240px] border-2 border-dashed border-slate-200 rounded-[40px] bg-white/60 backdrop-blur-md hover:bg-white/80 transition-all overflow-hidden shadow-inner cursor-default group-hover:border-[#8424bd]/30">
               {isCameraActive ? (
                 <div className="relative w-full h-full flex flex-col items-center">
-                  <video ref={videoRef} autoPlay playsInline className="w-full max-h-[300px] object-cover rounded-2xl" />
-                  <div className="absolute bottom-4 flex gap-2">
-                    <Button type="button" onClick={capturePhoto} className="rounded-full h-12 w-12 p-0 bg-slate-900 shadow-lg">
-                      <Camera className="w-6 h-6" />
+                  <motion.video 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    ref={videoRef} 
+                    autoPlay 
+                    playsInline 
+                    className="w-full max-h-[400px] object-cover rounded-[32px] shadow-2xl border-4 border-white" 
+                  />
+                  <div className="absolute bottom-6 flex gap-4">
+                    <Button type="button" onClick={capturePhoto} className="h-14 w-14 rounded-2xl p-0 bg-[#8424bd] hover:bg-[#6c1d9b] shadow-2xl shadow-purple-300">
+                      <Camera className="w-7 h-7" />
                     </Button>
-                    <Button type="button" variant="outline" onClick={stopCamera} className="rounded-full h-12 w-12 p-0 bg-white shadow-lg">
-                      <X className="w-6 h-6" />
+                    <Button type="button" variant="outline" onClick={stopCamera} className="h-14 w-14 rounded-2xl p-0 bg-white shadow-2xl border-white hover:bg-slate-50">
+                      <X className="w-7 h-7 text-red-500" />
                     </Button>
                   </div>
                   <canvas ref={canvasRef} className="hidden" />
                 </div>
               ) : filePreview ? (
-                <div className="relative w-40 h-40 group/preview">
-                  <img src={filePreview} alt="Preview" className="w-full h-full object-cover rounded-2xl border-2 border-white shadow-xl" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-2">
+                <div className="relative w-48 h-48 group/preview">
+                  <motion.img 
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    src={filePreview} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover rounded-[32px] border-4 border-white shadow-2xl ring-8 ring-[#8424bd]/5" 
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/preview:opacity-100 transition-opacity rounded-[32px] flex items-center justify-center gap-3 backdrop-blur-sm">
                     <button
                       type="button"
                       onClick={() => {
                         setFilePreview(null);
                         form.setValue('photo_url', '');
                       }}
-                      className="w-8 h-8 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-rose-500 transition-colors"
+                      className="w-10 h-10 bg-white/20 backdrop-blur-md text-white rounded-2xl flex items-center justify-center hover:bg-rose-500 transition-all hover:scale-110"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-5 h-5" />
                     </button>
                     <button
                       type="button"
                       onClick={startCamera}
-                      className="w-8 h-8 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-slate-900 transition-colors"
+                      className="w-10 h-10 bg-white/20 backdrop-blur-md text-white rounded-2xl flex items-center justify-center hover:bg-[#8424bd] transition-all hover:scale-110"
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      <RefreshCw className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-6 p-8">
-                  <div className="flex gap-4">
+                <div className="flex flex-col items-center gap-8 p-10">
+                  <div className="flex gap-6">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 hover:border-slate-300 transition-all w-32"
+                      className="group/btn flex flex-col items-center gap-4 p-6 rounded-[32px] bg-white shadow-xl shadow-slate-200/40 border border-slate-100 hover:border-[#8424bd]/40 transition-all w-36 hover:-translate-y-1"
                       disabled={isUploading}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                        <Upload className="w-5 h-5 text-slate-500" />
+                      <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center group-hover/btn:bg-purple-50 transition-colors">
+                        <Upload className="w-6 h-6 text-slate-400 group-hover/btn:text-[#8424bd]" />
                       </div>
-                      <span className="text-xs font-bold text-slate-600">Upload File</span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Browse Storage</span>
                     </button>
                     <button
                       type="button"
                       onClick={startCamera}
-                      className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 hover:border-slate-300 transition-all w-32"
+                      className="group/btn flex flex-col items-center gap-4 p-6 rounded-[32px] bg-white shadow-xl shadow-slate-200/40 border border-slate-100 hover:border-[#8424bd]/40 transition-all w-36 hover:-translate-y-1"
                       disabled={isUploading}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                        <Camera className="w-5 h-5 text-slate-500" />
+                      <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center group-hover/btn:bg-purple-50 transition-colors">
+                        <Camera className="w-6 h-6 text-slate-400 group-hover/btn:text-[#8424bd]" />
                       </div>
-                      <span className="text-xs font-bold text-slate-600">Take Photo</span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Capture LIVE</span>
                     </button>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Select photo source</p>
+                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">AUTHENTIC STUDENT PHOTO REQUIRED</p>
                   </div>
                 </div>
               )}
@@ -402,17 +433,17 @@ export function StudentRegistration() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 bg-white/40 p-1 rounded-[32px]">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Full Identity Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} className="rounded-xl h-12" />
+                    <Input placeholder="E.g. Alexander Hamilton" {...field} className="rounded-[20px] h-14 bg-white/80 border-slate-100 focus:ring-4 focus:ring-purple-50 font-bold px-6" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="ml-4" />
                 </FormItem>
               )}
             />
@@ -421,11 +452,11 @@ export function StudentRegistration() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Student Email</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Primary Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="john@example.com" {...field} className="rounded-xl h-12" />
+                    <Input placeholder="student@excellent.edu" {...field} className="rounded-[20px] h-14 bg-white/80 border-slate-100 focus:ring-4 focus:ring-purple-50 font-bold px-6" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="ml-4" />
                 </FormItem>
               )}
             />
@@ -434,20 +465,20 @@ export function StudentRegistration() {
               name="course"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Course</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Academic stream</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="rounded-xl h-12">
+                      <SelectTrigger className="rounded-[20px] h-14 bg-white/80 border-slate-100 focus:ring-4 focus:ring-purple-50 font-bold px-6">
                         <SelectValue placeholder="Select course" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="JEE">JEE Main/Advance</SelectItem>
-                      <SelectItem value="NEET">NEET UG</SelectItem>
-                      <SelectItem value="CBSE">CBSE Board</SelectItem>
+                    <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                      <SelectItem value="JEE" className="focus:bg-[#8424bd] focus:text-white rounded-xl">JEE Main/Advance</SelectItem>
+                      <SelectItem value="NEET" className="focus:bg-[#8424bd] focus:text-white rounded-xl">NEET UG</SelectItem>
+                      <SelectItem value="CBSE" className="focus:bg-[#8424bd] focus:text-white rounded-xl">CBSE Board</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="ml-4" />
                 </FormItem>
               )}
             />
@@ -456,11 +487,11 @@ export function StudentRegistration() {
               name="class_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Batch/Class ID</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Assigned Batch ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="JEE26TE" {...field} className="rounded-xl h-12" />
+                    <Input placeholder="JEE26-B1" {...field} className="rounded-[20px] h-14 bg-white/80 border-slate-100 focus:ring-4 focus:ring-purple-50 font-bold px-6" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="ml-4" />
                 </FormItem>
               )}
             />
@@ -469,11 +500,11 @@ export function StudentRegistration() {
               name="roll_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Roll Number</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Unique Roll Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="TE-001" {...field} className="rounded-xl h-12" />
+                    <Input placeholder="TE-XXXX" {...field} className="rounded-[20px] h-14 bg-white/80 border-slate-100 focus:ring-4 focus:ring-purple-50 font-bold px-6 uppercase" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="ml-4" />
                 </FormItem>
               )}
             />
@@ -482,11 +513,11 @@ export function StudentRegistration() {
               name="parent_email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Parent Email</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Guardian Contact Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="parent@example.com" {...field} className="rounded-xl h-12" />
+                    <Input placeholder="parent@home.com" {...field} className="rounded-[20px] h-14 bg-white/80 border-slate-100 focus:ring-4 focus:ring-purple-50 font-bold px-6" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="ml-4" />
                 </FormItem>
               )}
             />
@@ -495,11 +526,11 @@ export function StudentRegistration() {
               name="parent_phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Parent Phone</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Guardian Mobile Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="9876543210" {...field} className="rounded-xl h-12" />
+                    <Input placeholder="+91 0000 000000" {...field} className="rounded-[20px] h-14 bg-white/80 border-slate-100 focus:ring-4 focus:ring-purple-50 font-bold px-6" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="ml-4" />
                 </FormItem>
               )}
             />
@@ -508,25 +539,29 @@ export function StudentRegistration() {
               name="valid_until"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valid Until</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Identity expiration Date</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} className="rounded-xl h-12" />
+                    <Input type="date" {...field} className="rounded-[20px] h-14 bg-white/80 border-slate-100 focus:ring-4 focus:ring-purple-50 font-bold px-6 uppercase" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="ml-4" />
                 </FormItem>
               )}
             />
           </div>
 
-          <Button type="submit" className="w-full h-14 rounded-2xl font-black text-lg shadow-xl" disabled={isSubmitting || isUploading || isCameraActive}>
+          <Button type="submit" className="w-full h-18 rounded-[28px] bg-slate-900 hover:bg-[#8424bd] text-white font-black text-sm tracking-[0.2em] uppercase shadow-2xl shadow-slate-300 hover:shadow-purple-300 transition-all duration-500 active:scale-95 group overflow-hidden" disabled={isSubmitting || isUploading || isCameraActive}>
             {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Processing...
-              </>
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                COMMITTING TO BLOCKCHAIN...
+              </div>
             ) : (
-              'Register & Generate QR'
+              <div className="flex items-center gap-3 relative z-10">
+                 FINALIZE REGISTRATION
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
             )}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
           </Button>
         </form>
       </Form>

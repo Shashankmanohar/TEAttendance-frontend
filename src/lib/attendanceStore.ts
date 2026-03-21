@@ -74,9 +74,9 @@ export async function toggleFeeStatus(id: string): Promise<any> {
 
 export async function markAttendance(payload: any): Promise<MarkAttendanceResult> {
   const { data } = await api.post('attendance/clock-in', {
-    roll_number: payload.rollNumber || payload.roll_number,
-    class_id: payload.classId || payload.class_id,
-    course: payload.course
+    roll_number: payload.roll_number || payload.rollNumber || payload.studentId,
+    class_id: payload.class_id || payload.classId || 'default',
+    course: payload.course || ''
   });
   return data;
 }

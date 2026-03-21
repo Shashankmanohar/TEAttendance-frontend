@@ -7,39 +7,40 @@ interface Options {
   intervalMs?: number;
 }
 
-export function useQRFromVideo({ videoRef, enabled, intervalMs = 40 }: Options) {
+export function useQRFromVideo({ videoRef, enabled }: Options) {
   const [detectedPayload, setDetectedPayload] = useState<StudentQRPayload | null>(null);
   const [supported, setSupported] = useState(true);
-  const detectorRef = useRef<BarcodeDetector | null>(null);
-  const intervalRef = useRef<number>(0);
   const lastRawRef = useRef<string | null>(null);
   const scanningRef = useRef(false);
 
-  // Init BarcodeDetector once
+  // Check support
   useEffect(() => {
     if (!('BarcodeDetector' in window)) {
       setSupported(false);
-      return;
-    }
-    try {
-      detectorRef.current = new BarcodeDetector({ formats: ['qr_code'] });
-    } catch {
-      setSupported(false);
+      console.warn('BarcodeDetector is not supported in this browser.');
     }
   }, []);
 
   // Scanning loop
   useEffect(() => {
-    if (!enabled || !detectorRef.current) {
-      clearInterval(intervalRef.current);
-      return;
+    if (!enabled) return;
+
+    let detector: any = null;
+    if ('BarcodeDetector' in window) {
+      try {
+        // @ts-ignore
+        detector = new BarcodeDetector({ formats: ['qr_code'] });
+      } catch (e) {
+        console.warn('BarcodeDetector found but failed to init:', e);
+      }
     }
 
+    if (!detector) return;
+
     const scan = async () => {
-      if (scanningRef.current) return; // skip if previous scan still running
+      if (scanningRef.current) return;
       const video = videoRef.current;
-      const detector = detectorRef.current;
-      if (!video || !detector || video.readyState < 2) return;
+      if (!video || video.readyState < 2) return;
 
       scanningRef.current = true;
       try {
@@ -50,20 +51,25 @@ export function useQRFromVideo({ videoRef, enabled, intervalMs = 40 }: Options) 
             lastRawRef.current = raw;
             const payload = parseQRData(raw);
             if (payload && validateQRPayload(payload)) {
+              console.log('QR Detected and Parsed:', payload);
               setDetectedPayload(payload);
+            } else {
+              // If it's not a valid payload for our system, clear lastRawRef so we can try again
+              // (unless we want to avoid spamming invalid QR messages)
+              lastRawRef.current = null;
             }
           }
         }
-      } catch {
+      } catch (err) {
         // detection error — continue
       } finally {
         scanningRef.current = false;
       }
     };
 
-    intervalRef.current = window.setInterval(scan, intervalMs);
-    return () => clearInterval(intervalRef.current);
-  }, [enabled, intervalMs, videoRef]);
+    const intervalId = setInterval(scan, 30); // 33 FPS - Very fast
+    return () => clearInterval(intervalId);
+  }, [enabled, videoRef]);
 
   const reset = useCallback(() => {
     setDetectedPayload(null);

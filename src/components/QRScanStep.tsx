@@ -31,39 +31,35 @@ export function QRScanStep() {
     const studentId = payload.studentId || payload.rollNumber || payload.roll_number;
     const now = Date.now();
     
-    // 1. Per-student cooldown (10 seconds)
+    // 1. Per-student cooldown (3 seconds)
     const lastScanTime = studentCooldowns.current.get(studentId) || 0;
-    if (now - lastScanTime < 10000) {
+    if (now - lastScanTime < 3000) {
       console.log(`Student ${studentId} is on cooldown`);
       resetQR();
       return;
     }
 
-    // 2. Global UI cooldown (800ms) to prevent overlapping animations/requests
+    // 2. Global UI cooldown (400ms) to prevent overlapping animations/requests
     if (globalCooldownRef.current) return;
     
     globalCooldownRef.current = true;
     studentCooldowns.current.set(studentId, now);
 
     try {
-      // Clear previous result immediately to show loading/new state if needed
-      // but here we just wait for the new result to pop in
       const result = await markAttendance(payload);
-      
-      // Clear any existing timeout to avoid multiple resets overlapping
       setScanResult(result);
       
-      // Auto-reset UI after 4 seconds (but allow next scan after 1.5s)
+      // Auto-reset UI after 2.5 seconds
       setTimeout(() => {
         if (!mountedRef.current) return;
         setScanResult(null);
-      }, 4000);
+      }, 2500);
 
-      // Allow NEXT scan (global cooldown release)
+      // Allow NEXT scan (global cooldown release) earlier (600ms)
       setTimeout(() => {
         globalCooldownRef.current = false;
-        resetQR(); // Reset the hook's internal lastRawRef
-      }, 1500);
+        resetQR(); 
+      }, 600);
 
     } catch (error: any) {
       console.error('Attendance error:', error);
@@ -125,26 +121,27 @@ export function QRScanStep() {
   }, [qrCameraId, startCamera, stopCamera]);
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-[48px] shadow-2xl overflow-hidden border border-gray-100 p-8 flex flex-col items-center gap-6 relative animate-in fade-in zoom-in duration-500">
+    <div className="w-full max-w-lg mx-auto bg-white/40 backdrop-blur-3xl rounded-[48px] shadow-2xl overflow-hidden border border-white p-8 flex flex-col items-center gap-8 relative animate-in fade-in zoom-in duration-700">
       {/* Top Section: Placeholders or Active Info */}
-      <div className="w-full flex justify-between items-center text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-        <div className="px-4 py-2.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-2">
-          ROLL : <span className="text-slate-900">{scanResult ? scanResult.student.roll_number : '-------'}</span>
+      <div className="w-full flex justify-between items-center text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+        <div className="px-5 py-3 bg-white/60 rounded-[20px] border border-white flex items-center gap-2.5 shadow-sm">
+          ROLL ID : <span className="text-slate-900 font-black">{scanResult ? scanResult.student.roll_number : '-------'}</span>
         </div>
-        <div className="px-4 py-2.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-2">
-          VALID : <span className="text-slate-900">{scanResult ? (new Date(scanResult.student.valid_until || '').toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })) : '--/--/--'}</span>
+        <div className="px-5 py-3 bg-white/60 rounded-[20px] border border-white flex items-center gap-2.5 shadow-sm">
+          VALIDITY : <span className="text-[#8424bd] font-black">{scanResult ? (new Date(scanResult.student.valid_until || '').toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })) : '--/--/--'}</span>
         </div>
       </div>
 
       {/* Profile/Scanner Area */}
-      <div className="relative">
-        <div className="w-64 h-64 rounded-full overflow-hidden border-8 border-emerald-50 shadow-2xl bg-slate-950 flex items-center justify-center relative qr-scanner-container shrink-0">
+      <div className="relative group">
+        <div className="absolute inset-0 bg-[#8424bd]/20 blur-[60px] rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+        <div className="w-72 h-72 rounded-full overflow-hidden border-[12px] border-white shadow-2xl bg-slate-950 flex items-center justify-center relative qr-scanner-container shrink-0 z-10">
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover scale-[1.2]"
+            className="w-full h-full object-cover scale-[1.3] brightness-110 contrast-110"
           />
           
           <AnimatePresence>
@@ -155,8 +152,9 @@ export function QRScanStep() {
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 pointer-events-none z-10"
               >
-                <div className="scan-line-circular w-64" />
-                <div className="absolute inset-0 border-[16px] border-white/5 rounded-full" />
+                <div className="scan-line-circular w-full opacity-60" />
+                <div className="absolute inset-0 border-[20px] border-white/5 rounded-full" />
+                <div className="absolute inset-0 border border-white/20 rounded-full" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -164,9 +162,10 @@ export function QRScanStep() {
           <AnimatePresence>
             {scanResult && (
               <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 1.1, opacity: 0 }}
+                initial={{ scale: 0.8, opacity: 0, filter: 'blur(10px)' }}
+                animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+                exit={{ scale: 1.1, opacity: 0, filter: 'blur(10px)' }}
+                transition={{ type: "spring", damping: 20, stiffness: 100 }}
                 className="absolute inset-0 z-20 bg-slate-900"
               >
                 {scanResult.student.photo_url ? (
@@ -182,16 +181,17 @@ export function QRScanStep() {
                 )}
                 
                 {/* Overlay status icon */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[4px]">
                    <motion.div
-                     initial={{ scale: 0.5, opacity: 0 }}
-                     animate={{ scale: 1, opacity: 1 }}
-                     className={`p-4 rounded-full ${scanResult.canEnter ? 'bg-emerald-500' : 'bg-red-500'} shadow-2xl`}
+                     initial={{ scale: 0, rotate: -45 }}
+                     animate={{ scale: 1, rotate: 0 }}
+                     transition={{ type: "spring", damping: 15, stiffness: 150 }}
+                     className={`p-6 rounded-[32px] ${scanResult.canEnter ? 'bg-emerald-500' : 'bg-red-500'} shadow-[0_0_50px_rgba(0,0,0,0.3)] border-4 border-white/20`}
                    >
                      {scanResult.canEnter ? (
-                       <CheckCircle2 className="w-12 h-12 text-white" />
+                       <CheckCircle2 className="w-16 h-16 text-white" />
                      ) : (
-                       <XCircle className="w-12 h-12 text-white" />
+                       <XCircle className="w-16 h-16 text-white" />
                      )}
                    </motion.div>
                 </div>
@@ -201,60 +201,76 @@ export function QRScanStep() {
 
           {!scanResult && isScanning && (
             <div className="absolute inset-0 pointer-events-none z-0">
-              <div className="absolute inset-0 border-2 border-[#8424bd]/30 rounded-full animate-pulse" />
+              <div className="absolute inset-0 border-4 border-[#8424bd]/20 rounded-full animate-pulse" />
             </div>
           )}
         </div>
+        
+        {/* Floating Corners */}
+        <div className="absolute -top-4 -left-4 w-12 h-12 border-t-4 border-l-4 border-[#8424bd]/40 rounded-tl-3xl z-20 animate-pulse" />
+        <div className="absolute -top-4 -right-4 w-12 h-12 border-t-4 border-r-4 border-[#8424bd]/40 rounded-tr-3xl z-20 animate-pulse" />
+        <div className="absolute -bottom-4 -left-4 w-12 h-12 border-b-4 border-l-4 border-[#8424bd]/40 rounded-bl-3xl z-20 animate-pulse" />
+        <div className="absolute -bottom-4 -right-4 w-12 h-12 border-b-4 border-r-4 border-[#8424bd]/40 rounded-br-3xl z-20 animate-pulse" />
       </div>
 
       {/* Welcome Section */}
-      <div className="w-full px-7 py-5 bg-gray-50 rounded-[28px] border border-slate-100 flex justify-between items-center transition-all duration-300">
+      <div className="w-full px-8 py-6 bg-white/60 backdrop-blur-xl rounded-[32px] border border-white flex justify-between items-center shadow-xl shadow-slate-200/40 group hover:-translate-y-1 transition-all duration-500">
         <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
-            {scanResult ? 'STUDENT IDENTIFIED' : 'WELCOME TO'}
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1.5">
+            {scanResult ? 'PROTOCOL RECOGNIZED' : 'STANDBY MODE'}
           </p>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight truncate max-w-[180px]">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight truncate max-w-[220px]">
             {scanResult ? scanResult.student.name : 'TEAM EXCELLENT'}
           </h2>
         </div>
-        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${scanResult ? (scanResult.canEnter ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600') : 'bg-white text-gray-300 border border-gray-100'}`}>
-          <ArrowUpRight className="w-5 h-5" />
+        <div className={`w-12 h-12 rounded-[20px] flex items-center justify-center transition-all duration-500 shadow-lg ${scanResult ? (scanResult.canEnter ? 'bg-emerald-500 text-white shadow-emerald-200 rotate-45' : 'bg-red-500 text-white shadow-red-200') : 'bg-white text-slate-200 border border-slate-100 group-hover:text-[#8424bd]'}`}>
+          <ArrowUpRight className="w-6 h-6" />
         </div>
       </div>
 
       {/* Footer Status Card */}
-      <div className={`w-full p-6 rounded-[36px] transition-all duration-500 shadow-xl ${!scanResult ? 'bg-[#0f172a]' : scanResult.canEnter ? 'bg-[#8424bd]' : 'bg-red-600'} text-white flex flex-col gap-4`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl transition-colors ${scanResult ? 'bg-white/20' : 'bg-white/10'}`}>
+      <div className={`w-full p-8 rounded-[44px] transition-all duration-1000 shadow-2xl ${!scanResult ? 'bg-[#0f172a]' : scanResult.canEnter ? 'bg-[#8424bd]' : 'bg-red-600'} text-white flex flex-col gap-5 relative overflow-hidden group/card`}>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover/card:scale-150 transition-transform duration-1000" />
+        
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-6">
+            <div className={`w-16 h-16 rounded-[24px] bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-black text-2xl tracking-tighter transition-all duration-500 ${scanResult ? 'scale-110 rotate-3 shadow-xl' : ''}`}>
               {scanResult ? scanResult.student.name.split(' ').map(n => n[0]).join('') : '??'}
             </div>
             <div>
-              <h3 className="font-bold text-xl leading-tight">
-                {scanResult ? (scanResult.canEnter ? 'Access Granted' : 'Access Denied') : 'Ready to Scan'}
+              <h3 className="font-black text-2xl leading-none mb-2 tracking-tight">
+                {scanResult ? (scanResult.canEnter ? 'ACCESS GRANTED' : 'ACCESS DENIED') : 'READY TO SCAN'}
               </h3>
-              <div className={`mt-1.5 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-block bg-white/10 border border-white/20`}>
-                {scanResult ? scanResult.message : 'Position QR in Frame'}
+              <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] inline-block bg-white/10 border border-white/20 backdrop-blur-sm`}>
+                {scanResult ? scanResult.message : 'Position QR for Detection'}
               </div>
             </div>
           </div>
-          <QrCode className={`w-7 h-7 ${isScanning && !scanResult ? 'animate-pulse text-emerald-400' : 'text-white/40'}`} />
+          <div className="relative">
+             <QrCode className={`w-8 h-8 ${isScanning && !scanResult ? 'animate-pulse text-emerald-400' : 'text-white'}`} />
+             {scanResult && <div className="absolute inset-0 bg-white blur-xl opacity-30 animate-pulse" />}
+          </div>
         </div>
         
-        <p className="text-xs text-white/70 italic font-medium leading-relaxed">
-          {scanResult ? 
-            (scanResult.canEnter ? '"Success is not final; failure is not fatal: It is the courage to continue that counts."' : '"Please resolve outstanding issues to proceed."') 
-            : '"Please wait while the system verifies credentials."'}
-        </p>
+        <div className="pt-5 border-t border-white/10">
+          <p className="text-[11px] text-white/60 italic font-medium leading-relaxed uppercase tracking-wider">
+            {scanResult ? 
+              (scanResult.canEnter ? '"EXCELLENCE IS NOT A SKILL. IT IS AN ATTITUDE."' : '"AUTHORIZATION FAILED. CONTACT SYSTEM ADMIN."') 
+              : '"PROCEED WITH CAUTION. SYSTEM IS RECORDING."'}
+          </p>
+        </div>
       </div>
 
       {cameraError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm p-6 z-50 rounded-[40px]">
-          <XCircle className="w-12 h-12 text-red-500 mb-4" />
-          <p className="text-center font-bold text-slate-900 mb-4">{cameraError}</p>
-          <Button onClick={startCamera} variant="outline" className="rounded-2xl h-12 px-8 font-black border-slate-200">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            RETRY CAMERA
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/98 backdrop-blur-md p-8 z-[60] rounded-[48px] animate-in slide-in-from-top-4 duration-500">
+          <div className="w-20 h-20 rounded-[32px] bg-red-50 flex items-center justify-center mb-6">
+            <XCircle className="w-10 h-10 text-red-500" />
+          </div>
+          <h3 className="text-xl font-black text-slate-900 mb-2">HARDWARE ERROR</h3>
+          <p className="text-center font-bold text-slate-400 text-sm mb-8 leading-relaxed max-w-[240px]">{cameraError}</p>
+          <Button onClick={startCamera} className="w-full h-16 rounded-[24px] bg-[#8424bd] hover:bg-[#6c1d9b] text-white font-black tracking-widest text-xs shadow-xl active:scale-95 transition-all">
+            <RefreshCw className="w-4 h-4 mr-3 animate-spin-slow" />
+            RE-INITIALIZE HARDWARE
           </Button>
         </div>
       )}
