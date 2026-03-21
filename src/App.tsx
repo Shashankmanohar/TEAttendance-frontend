@@ -18,6 +18,13 @@ const queryClient = new QueryClient();
 function AppLayout() {
   const location = useLocation();
   const [isFullPage, setIsFullPage] = useState(false);
+  
+  console.log('HIDE SIDEBAR LOGIC:', {
+    pathname: location.pathname,
+    isStatus: location.pathname === '/status',
+    isFullPage,
+    hideSidebar: (isFullPage && location.pathname === '/') || location.pathname === '/status'
+  });
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -28,13 +35,17 @@ function AppLayout() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Also allow manual trigger if needed, but event listener is more robust
-  const hideSidebar = (isFullPage && location.pathname === '/') || location.pathname === '/status';
+  // Force path to lowercase and check for status
+  const isStatusPage = location.pathname.toLowerCase().includes('status');
+  const hideSidebar = isStatusPage || (isFullPage && location.pathname === '/');
 
   return (
     <div className="min-h-screen bg-background transition-all duration-500">
-      {!hideSidebar && <Navigation />}
-      <main className={hideSidebar ? "w-full" : "md:ml-[260px]"}>
+      {!hideSidebar && <Navigation key={location.pathname} />}
+      <main 
+        key={location.pathname}
+        className={hideSidebar ? "w-full" : "md:ml-[260px]"}
+      >
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
