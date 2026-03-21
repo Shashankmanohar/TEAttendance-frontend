@@ -82,7 +82,7 @@ export async function markAttendance(payload: any): Promise<MarkAttendanceResult
     });
     return data;
   } catch (error: any) {
-    if (error.response && error.response.status === 400) {
+    if (error.response && error.response.data) {
       return error.response.data;
     }
     throw error;
