@@ -3,18 +3,36 @@ import { QrCode, LayoutDashboard, UserPlus, Users, ClipboardList, Menu, X, Recei
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
+import { LogOut, LogIn } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const navItems = [
-  { path: '/', label: 'Scanner', icon: QrCode, description: 'Scan QR codes' },
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, description: 'Overview & stats' },
-  { path: '/register', label: 'Register', icon: UserPlus, description: 'Add students' },
-  { path: '/students', label: 'Students', icon: Users, description: 'Manage roster' },
-  { path: '/logs', label: 'Logs', icon: ClipboardList, description: 'Attendance records' },
+  { path: '/', label: 'Scanner', icon: QrCode, description: 'Scan QR codes', public: true },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, description: 'Overview & stats', public: false },
+  { path: '/register', label: 'Register', icon: UserPlus, description: 'Add students', public: false },
+  { path: '/students', label: 'Students', icon: Users, description: 'Manage roster', public: false },
+  { path: '/logs', label: 'Logs', icon: ClipboardList, description: 'Attendance records', public: false },
 ];
 
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, logout, token } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out",
+    });
+    navigate('/login');
+  };
+
+  const visibleNavItems = navItems.filter(item => item.public || !!token);
 
   return (
     <>
@@ -32,7 +50,7 @@ export function Navigation() {
 
         <nav className="flex-1 px-4 py-8 space-y-1.5 overflow-y-auto">
           <p className="px-3 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4">Navigation Menu</p>
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path);
             return (
               <NavLink
@@ -63,6 +81,29 @@ export function Navigation() {
             );
           })}
         </nav>
+
+        <div className="px-4 py-4 space-y-1 border-t border-slate-50">
+          {token ? (
+            <button
+              onClick={handleLogout}
+              className="w-full group flex items-center gap-3.5 px-4 py-3 rounded-[20px] text-sm text-rose-500 hover:text-rose-600 hover:bg-rose-50 transition-all duration-300"
+            >
+              <LogOut className="w-5 h-5 transition-transform group-hover:scale-110" />
+              <span className="font-bold">Logout</span>
+            </button>
+          ) : (
+            <NavLink
+              to="/login"
+              className={cn(
+                'group flex items-center gap-3.5 px-4 py-3 rounded-[20px] text-sm transition-all duration-300',
+                location.pathname === '/login' ? 'bg-slate-100 text-[#8424bd]' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+              )}
+            >
+              <LogIn className="w-5 h-5 transition-transform group-hover:scale-110" />
+              <span className="font-bold">Admin Login</span>
+            </NavLink>
+          )}
+        </div>
 
         <div className="p-6 border-t border-slate-50">
           <div className="rounded-3xl bg-slate-50 p-4 relative overflow-hidden group hover:bg-slate-100 transition-colors">
@@ -104,7 +145,7 @@ export function Navigation() {
               exit={{ opacity: 0, y: -10 }}
               className="absolute top-16 left-0 right-0 border-b border-border bg-white shadow-2xl p-4 space-y-1 z-[60] overflow-hidden"
             >
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const isActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path);
                 return (
                   <NavLink
@@ -126,6 +167,30 @@ export function Navigation() {
                   </NavLink>
                 );
               })}
+              {token ? (
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold text-rose-500 hover:bg-rose-50 transition-all"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Logout</span>
+                </button>
+              ) : (
+                <NavLink
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all',
+                    location.pathname === '/login' ? 'bg-slate-100 text-[#8424bd]' : 'text-slate-500 hover:bg-slate-50'
+                  )}
+                >
+                  <LogIn className="w-5 h-5" />
+                  <span>Admin Login</span>
+                </NavLink>
+              )}
             </motion.nav>
           )}
         </AnimatePresence>

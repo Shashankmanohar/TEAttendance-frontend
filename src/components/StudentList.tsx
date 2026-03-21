@@ -1,9 +1,35 @@
 import { useState, useEffect } from 'react';
-import { getStudents, toggleFeeStatus, Student } from '@/lib/attendanceStore';
+import { getStudents, toggleFeeStatus, updateStudent, deleteStudent, Student, getClassSections } from '@/lib/attendanceStore';
 import { generateStudentPayload } from '@/lib/qrUtils';
 import { Button } from '@/components/ui/button';
-import { Check, X, Loader2, RefreshCw, User, Search, Download } from 'lucide-react';
+import { Check, X, Loader2, RefreshCw, User, Search, Download, Edit2, Trash2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
 
@@ -12,6 +38,13 @@ export function StudentList() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  
+  // Edit/Delete states
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [deletingStudent, setDeletingStudent] = useState<Student | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   const fetchStudents = async () => {
     setIsLoading(true);
@@ -47,6 +80,40 @@ export function StudentList() {
       toast.error('Failed to update fee status');
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleUpdateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    setIsActionLoading(true);
+    try {
+      const updated = await updateStudent(editingStudent._id, editingStudent);
+      setStudents(prev => prev.map(s => s._id === updated._id ? updated : s));
+      toast.success('Student updated successfully');
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating student:', error);
+      toast.error('Failed to update student');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!deletingStudent) return;
+    setIsActionLoading(true);
+    try {
+      await deleteStudent(deletingStudent._id);
+      setStudents(prev => prev.filter(s => s._id !== deletingStudent._id));
+      toast.success('Student deleted successfully');
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      toast.error('Failed to delete student');
+    } finally {
+      setIsActionLoading(false);
+      setDeletingStudent(null);
     }
   };
   
@@ -209,11 +276,36 @@ export function StudentList() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDownloadCard(student)}
+                          title="Download QR Card"
                           className="rounded-xl px-3 font-bold text-xs h-9 border-slate-200 text-slate-600 hover:bg-slate-50"
                         >
-                          <Download className="w-3.5 h-3.5 mr-1.5" />
-                          Download
+                          <Download className="w-3.5 h-3.5" />
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingStudent(student);
+                            setIsEditDialogOpen(true);
+                          }}
+                          title="Edit Student"
+                          className="rounded-xl px-3 font-bold text-xs h-9 border-slate-200 text-blue-600 hover:bg-blue-50"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setDeletingStudent(student);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                          title="Delete Student"
+                          className="rounded-xl px-3 font-bold text-xs h-9 border-slate-200 text-rose-600 hover:bg-rose-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <div className="w-px h-6 bg-slate-100 mx-1 self-center" />
                         <Button
                           size="sm"
                           variant={student.fees_paid ? "outline" : "default"}
@@ -226,9 +318,9 @@ export function StudentList() {
                           {togglingId === student._id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
                           ) : student.fees_paid ? (
-                            'Mark Unpaid'
+                            'Unpaid'
                           ) : (
-                            'Mark Paid'
+                            'Paid'
                           )}
                         </Button>
                       </div>
@@ -241,6 +333,104 @@ export function StudentList() {
           </table>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md rounded-[32px] border-none shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black text-slate-900">EDIT STUDENT</DialogTitle>
+            <DialogDescription className="font-medium text-slate-500">
+              Update student information and save changes.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateStudent} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-slate-400">FullName</Label>
+              <Input 
+                id="name" 
+                value={editingStudent?.name || ''} 
+                onChange={(e) => setEditingStudent(prev => prev ? { ...prev, name: e.target.value } : null)}
+                className="rounded-2xl h-12 bg-slate-50 border-none focus-visible:ring-emerald-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="roll" className="text-xs font-black uppercase tracking-widest text-slate-400">Roll Number</Label>
+                <Input 
+                  id="roll" 
+                  value={editingStudent?.roll_number || ''} 
+                  onChange={(e) => setEditingStudent(prev => prev ? { ...prev, roll_number: e.target.value } : null)}
+                  className="rounded-2xl h-12 bg-slate-50 border-none focus-visible:ring-emerald-500 font-mono"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="course" className="text-xs font-black uppercase tracking-widest text-slate-400">Course</Label>
+                <Input 
+                  id="course" 
+                  value={editingStudent?.course || ''} 
+                  onChange={(e) => setEditingStudent(prev => prev ? { ...prev, course: e.target.value } : null)}
+                  className="rounded-2xl h-12 bg-slate-50 border-none focus-visible:ring-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-black uppercase tracking-widest text-slate-400">Class/Batch</Label>
+              <Select 
+                value={editingStudent?.class_id} 
+                onValueChange={(val) => setEditingStudent(prev => prev ? { ...prev, class_id: val } : null)}
+              >
+                <SelectTrigger className="rounded-2xl h-12 bg-slate-50 border-none focus:ring-emerald-500">
+                  <SelectValue placeholder="Select Class" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-none shadow-xl">
+                  {getClassSections().map((section) => (
+                    <SelectItem key={section.id} value={section.id} className="rounded-xl">
+                      {section.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter className="pt-4">
+              <Button 
+                type="submit" 
+                disabled={isActionLoading}
+                className="w-full h-12 rounded-2xl bg-slate-900 hover:bg-emerald-600 text-white font-bold transition-all"
+              >
+                {isActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'SAVE CHANGES'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="rounded-[32px] border-none shadow-2xl">
+          <AlertDialogHeader>
+            <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-red-500" />
+            </div>
+            <AlertDialogTitle className="text-2xl font-black text-slate-900">DELETE STUDENT?</AlertDialogTitle>
+            <AlertDialogDescription className="font-medium text-slate-500">
+              This action cannot be undone. This will permanently delete <strong>{deletingStudent?.name}</strong> and all associated attendance records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6 gap-3">
+            <AlertDialogCancel className="rounded-2xl h-12 border-slate-100 font-bold hover:bg-slate-50">CANCEL</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteStudent();
+              }}
+              disabled={isActionLoading}
+              className="rounded-2xl h-12 bg-red-500 hover:bg-red-600 text-white font-bold border-none"
+            >
+              {isActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'DELETE PERMANENTLY'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

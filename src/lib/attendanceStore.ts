@@ -68,6 +68,11 @@ export async function updateStudent(id: string, updateData: any): Promise<Studen
   return data;
 }
 
+export async function deleteStudent(id: string): Promise<any> {
+  const { data } = await api.delete(`students/${id}`);
+  return data;
+}
+
 export async function toggleFeeStatus(id: string): Promise<any> {
   const { data } = await api.patch(`students/${id}/toggle-fees`);
   return data;

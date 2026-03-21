@@ -11,7 +11,10 @@ import Register from "./pages/Register";
 import Students from "./pages/Students";
 import Logs from "./pages/Logs";
 import AttendanceStatus from "./pages/AttendanceStatus";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,11 +46,32 @@ function AppLayout() {
       {!hideSidebar && <Navigation />}
       <main className={hideSidebar ? "w-full" : "md:ml-[260px]"}>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/students" element={<Students />} />
-          <Route path="/logs" element={<Logs />} />
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Index />
+            </ProtectedRoute>
+          } />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/register" element={
+            <ProtectedRoute>
+              <Register />
+            </ProtectedRoute>
+          } />
+          <Route path="/students" element={
+            <ProtectedRoute>
+              <Students />
+            </ProtectedRoute>
+          } />
+          <Route path="/logs" element={
+            <ProtectedRoute>
+              <Logs />
+            </ProtectedRoute>
+          } />
           <Route path="/status" element={<AttendanceStatus />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -59,11 +83,13 @@ function AppLayout() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <BrowserRouter>
-        <AppLayout />
-      </BrowserRouter>
-      <Toaster />
-      <Sonner />
+      <AuthProvider>
+        <BrowserRouter>
+          <AppLayout />
+        </BrowserRouter>
+        <Toaster />
+        <Sonner />
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
