@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Users, UserCheck, UserX, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudentList } from './StudentList';
-import { getAttendanceRecords, getTodayDateKey, getStudents } from '@/lib/attendanceStore';
+import { getAttendanceRecords, getTodayDateKey, getStudents, AttendanceRecord } from '@/lib/attendanceStore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from '@/lib/utils';
 
 export function StudentManagement() {
   const [stats, setStats] = useState({ totalStrength: 0, present: 0, absent: 0 });
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [batchCount, setBatchCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -15,12 +17,13 @@ export function StudentManagement() {
   const refreshStats = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [records, students] = await Promise.all([
+      const [allRecords, students] = await Promise.all([
         getAttendanceRecords(getTodayDateKey()),
         getStudents()
       ]);
       
-      const presentCount = records.filter(r => r.status === 'You Can Enter').length;
+      setRecords(allRecords);
+      const presentCount = allRecords.filter(r => r.status === 'You Can Enter').length;
       const batches = new Set(students.map(s => s.class_id)).size;
       
       setStats({
@@ -69,8 +72,8 @@ export function StudentManagement() {
             <UserCheck className="w-7 h-7 text-emerald-600" />
           </div>
           <div>
-            <p className="text-3xl font-black text-emerald-600">{stats.present}</p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Present Today</p>
+            <p className="text-3xl font-black text-emerald-600">{records.length}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scanned Today</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-xl flex items-center gap-5">
@@ -93,8 +96,37 @@ export function StudentManagement() {
           <StudentList />
         </TabsContent>
         <TabsContent value="attendance" className="mt-0">
-          <div className="bg-white p-12 rounded-[32px] border border-slate-100 shadow-xl text-center">
-            <p className="text-slate-400 font-medium">Detailed logs window is coming soon...</p>
+          <div className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-xl">
+             <div className="space-y-3">
+               {records.length > 0 ? (
+                 records.map((record) => (
+                   <div key={record._id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition-colors">
+                     <div className="flex items-center gap-4">
+                       <div className={cn(
+                         "w-10 h-10 rounded-xl flex items-center justify-center",
+                         record.status === 'You Can Enter' ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                       )}>
+                         <ShieldCheck className="w-5 h-5" />
+                       </div>
+                       <div>
+                         <p className="font-bold text-slate-900">{record.student_name}</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase">{record.roll_number} • {new Date(record.timestamp).toLocaleTimeString()}</p>
+                       </div>
+                     </div>
+                     <span className={cn(
+                       "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                       record.status === 'You Can Enter' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-red-50 text-red-600 border-red-100"
+                     )}>
+                       {record.status}
+                     </span>
+                   </div>
+                 ))
+               ) : (
+                 <div className="py-20 text-center">
+                   <p className="text-slate-400 font-bold">No scans recorded for today yet.</p>
+                 </div>
+               )}
+             </div>
           </div>
         </TabsContent>
       </Tabs>

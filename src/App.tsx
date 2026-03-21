@@ -13,19 +13,18 @@ import Logs from "./pages/Logs";
 import AttendanceStatus from "./pages/AttendanceStatus";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function AppLayout() {
   const location = useLocation();
   const [isFullPage, setIsFullPage] = useState(false);
   
-  console.log('HIDE SIDEBAR LOGIC:', {
-    pathname: location.pathname,
-    isStatus: location.pathname === '/status',
-    isFullPage,
-    hideSidebar: (isFullPage && location.pathname === '/') || location.pathname === '/status'
-  });
-
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullPage(!!document.fullscreenElement);
@@ -35,17 +34,14 @@ function AppLayout() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Force path to lowercase and check for status
+  // Use includes for status to handle any sub-routes if needed later
   const isStatusPage = location.pathname.toLowerCase().includes('status');
   const hideSidebar = isStatusPage || (isFullPage && location.pathname === '/');
 
   return (
     <div className="min-h-screen bg-background transition-all duration-500">
-      {!hideSidebar && <Navigation key={location.pathname} />}
-      <main 
-        key={location.pathname}
-        className={hideSidebar ? "w-full" : "md:ml-[260px]"}
-      >
+      {!hideSidebar && <Navigation />}
+      <main className={hideSidebar ? "w-full" : "md:ml-[260px]"}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -63,11 +59,11 @@ function AppLayout() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
       <BrowserRouter>
         <AppLayout />
       </BrowserRouter>
+      <Toaster />
+      <Sonner />
     </TooltipProvider>
   </QueryClientProvider>
 );

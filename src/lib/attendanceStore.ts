@@ -36,6 +36,7 @@ export interface AttendanceRecord {
 export interface MarkAttendanceResult {
   message: string;
   canEnter: boolean;
+  alreadyMarked?: boolean;
   student: {
     name: string;
     roll_number: string;
