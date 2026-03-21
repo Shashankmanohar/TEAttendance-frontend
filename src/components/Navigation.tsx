@@ -99,10 +99,10 @@ export function Navigation() {
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.nav 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="border-t border-border bg-white p-4 space-y-1 overflow-hidden"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-16 left-0 right-0 border-b border-border bg-white shadow-2xl p-4 space-y-1 z-[60] overflow-hidden"
             >
               {navItems.map((item) => {
                 const isActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path);
@@ -110,11 +110,14 @@ export function Navigation() {
                   <NavLink
                     key={item.path}
                     to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={() => {
+                      console.log('Mobile menu closing via click on:', item.label);
+                      setMobileMenuOpen(false);
+                    }}
                     className={cn(
                       'flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all',
                       isActive
-                        ? 'bg-[#8424bd] text-white shadow-lg'
+                        ? 'bg-[#8424bd] text-white shadow-lg shadow-purple-100'
                         : 'text-slate-500 hover:bg-slate-50'
                     )}
                   >
