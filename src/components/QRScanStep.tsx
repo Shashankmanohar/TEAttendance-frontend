@@ -195,7 +195,11 @@ export function QRScanStep() {
               </div>
               <div>
                 <h3 className="font-black text-2xl leading-none mb-2 tracking-tight">
-                  {scanResult ? (scanResult.record.type === 'staff' ? 'STAFF RECOGNIZED' : 'SUCCESS') : 'READY TO SCAN'}
+                  {scanResult ? (
+                    (scanResult.record?.type === 'staff' || (scanResult.student?.roll_number && scanResult.student.roll_number.startsWith('STF-')))
+                      ? 'STAFF RECOGNIZED' 
+                      : 'SUCCESS'
+                  ) : 'READY TO SCAN'}
                 </h3>
                 <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] inline-block bg-white/10 border border-white/20 backdrop-blur-sm`}>
                   {scanResult ? scanResult.message : 'Position QR for Detection'}
