@@ -63,10 +63,10 @@ export async function generateQRCode(payload: StudentQRPayload): Promise<string>
 export function parseQRData(data: string): StudentQRPayload | null {
   try {
     const parsed = JSON.parse(data);
-    // Be flexible: accept either roll_number or studentId
-    if (parsed.roll_number || parsed.studentId) {
+    // Be flexible: accept roll_number, studentId, or staff_id
+    if (parsed.roll_number || parsed.studentId || parsed.staff_id) {
       return {
-        roll_number: parsed.roll_number || parsed.studentId,
+        roll_number: parsed.roll_number || parsed.studentId || parsed.staff_id,
         class_id: parsed.class_id || '',
         course: parsed.course || '',
         ...parsed
