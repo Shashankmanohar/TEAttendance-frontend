@@ -11,34 +11,34 @@ import { useQRFromVideo } from '@/hooks/useQRFromVideo';
 export function QRScanStep() {
   const { devices, qrCameraId, setQrCameraId, error: deviceError, refresh } = useCameraDevices();
   const [scanResult, setScanResult] = useState<MarkAttendanceResult | null>(null);
+  const mountedRef = useRef(true);
+  const scannerContainerRef = useRef<HTMLDivElement | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  
+
   // Cooldown tracking
   const studentCooldowns = useRef<Map<string, number>>(new Map());
   const globalCooldownRef = useRef<boolean>(false);
-  const mountedRef = useRef(true);
 
-   const { detectedPayload, reset: resetQR } = useQRFromVideo({
-    videoRef,
-    enabled: isScanning && !globalCooldownRef.current && !scanResult,
-    intervalMs: 40 // Faster scanning (25 FPS)
+  const { detectedPayload, reset: resetQR } = useQRFromVideo({
+    containerRef: scannerContainerRef,
+    enabled: true,
+    qrCameraId: qrCameraId || undefined
   });
 
   const handleMarkAttendance = useCallback(async (payload: any) => {
+    console.log('handleMarkAttendance called with:', payload);
     const studentId = payload.studentId || payload.rollNumber || payload.roll_number;
     const now = Date.now();
     
-    // 1. Per-student cooldown (1 second) to prevent multi-trigger from same frame burst
+    // 1. Per-student cooldown (1 second) to prevent multi-trigger
     const lastScanTime = studentCooldowns.current.get(studentId) || 0;
     if (now - lastScanTime < 1000) {
       resetQR();
       return;
     }
 
-    // 2. Global UI cooldown (400ms) to prevent overlapping animations/requests
+    // 2. Global UI cooldown
     if (globalCooldownRef.current || scanResult) return;
     
     globalCooldownRef.current = true;
@@ -48,18 +48,17 @@ export function QRScanStep() {
       const result = await markAttendance(payload);
       setScanResult(result);
       
-      // Auto-reset UI after 2.5 seconds
+      // Auto-reset UI after 1.2 seconds (Fast turnaround)
       setTimeout(() => {
         if (!mountedRef.current) return;
         setScanResult(null);
-        // Clear lastRaw in useQRFromVideo so it can scan the same code again immediately if still in frame
         resetQR();
-      }, 2500);
+      }, 1200);
 
-      // Allow NEXT scan (global cooldown release) earlier (600ms)
+      // Allow NEXT scan earlier (400ms)
       setTimeout(() => {
         globalCooldownRef.current = false;
-      }, 600);
+      }, 400);
 
     } catch (error: any) {
       console.error('Attendance error:', error);
@@ -75,63 +74,13 @@ export function QRScanStep() {
     }
   }, [detectedPayload, handleMarkAttendance]);
 
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    setIsScanning(false);
-  }, []);
-
-  const startCamera = useCallback(async () => {
-    if (!qrCameraId || !mountedRef.current) return;
-    stopCamera();
-
-    try {
-      console.log('Attempting to start camera with ID:', qrCameraId);
-      setCameraError(null);
-      
-      const constraints = {
-        video: {
-          deviceId: qrCameraId ? { exact: qrCameraId } : undefined,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          facingMode: 'environment'
-        }
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      console.log('QR Camera Stream acquired:', stream.id);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setIsScanning(true);
-        // Force play just in case
-        videoRef.current.play().catch(e => console.warn('Auto-play failed:', e));
-      }
-    } catch (error: any) {
-      console.error('QR Camera error:', error);
-      if (mountedRef.current) {
-        setCameraError(error?.name === 'NotAllowedError' ? 'Camera permission denied' : (error?.message || 'Failed to access camera'));
-        setIsScanning(false);
-      }
-    }
-  }, [qrCameraId, stopCamera]);
-
   useEffect(() => {
     mountedRef.current = true;
-    if (qrCameraId) {
-      startCamera();
-    } else {
-      console.log('No QR Camera ID selected yet');
-    }
+    setIsScanning(true);
     return () => { 
       mountedRef.current = false;
-      stopCamera(); 
     };
-  }, [qrCameraId, startCamera, stopCamera]);
+  }, []);
 
   return (
     <div className="w-full max-w-lg mx-auto bg-white/40 backdrop-blur-3xl rounded-[48px] shadow-2xl overflow-hidden border border-white p-8 flex flex-col items-center gap-8 relative animate-in fade-in zoom-in duration-700">
@@ -149,17 +98,9 @@ export function QRScanStep() {
       <div className="relative group">
         <div className="absolute inset-0 bg-[#8424bd]/20 blur-[60px] rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
         <div className="w-72 h-72 rounded-full overflow-hidden border-[12px] border-white shadow-2xl bg-slate-950 flex items-center justify-center relative qr-scanner-container shrink-0 z-10">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            onPlay={() => console.log('Video playing')}
-            onLoadedMetadata={(e) => {
-              console.log('Video metadata loaded');
-              e.currentTarget.play().catch(err => console.error('Play failed:', err));
-            }}
-            className="w-full h-full object-cover"
+          <div
+            ref={scannerContainerRef}
+            className="w-full h-full [&>video]:object-cover [&>video]:w-full [&>video]:h-full"
           />
           
           <AnimatePresence>
@@ -283,7 +224,6 @@ export function QRScanStep() {
             size="icon" 
             onClick={() => {
               refresh();
-              startCamera();
             }}
             className="w-12 h-12 rounded-2xl bg-white border-slate-100 hover:bg-slate-50 text-slate-400 hover:text-[#8424bd]"
           >
@@ -292,14 +232,14 @@ export function QRScanStep() {
         </div>
       </div>
 
-      {cameraError && (
+      {deviceError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/98 backdrop-blur-md p-8 z-[60] rounded-[48px] animate-in slide-in-from-top-4 duration-500">
           <div className="w-20 h-20 rounded-[32px] bg-red-50 flex items-center justify-center mb-6">
             <XCircle className="w-10 h-10 text-red-500" />
           </div>
           <h3 className="text-xl font-black text-slate-900 mb-2">HARDWARE ERROR</h3>
-          <p className="text-center font-bold text-slate-400 text-sm mb-8 leading-relaxed max-w-[240px]">{cameraError}</p>
-          <Button onClick={startCamera} className="w-full h-16 rounded-[24px] bg-[#8424bd] hover:bg-[#6c1d9b] text-white font-black tracking-widest text-xs shadow-xl active:scale-95 transition-all">
+          <p className="text-center font-bold text-slate-400 text-sm mb-8 leading-relaxed max-w-[240px]">{deviceError}</p>
+          <Button onClick={refresh} className="w-full h-16 rounded-[24px] bg-[#8424bd] hover:bg-[#6c1d9b] text-white font-black tracking-widest text-xs shadow-xl active:scale-95 transition-all">
             <RefreshCw className="w-4 h-4 mr-3 animate-spin-slow" />
             RE-INITIALIZE HARDWARE
           </Button>
