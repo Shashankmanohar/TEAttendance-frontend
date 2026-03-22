@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { QRCodeSVG } from 'qrcode.react';
 import QRCode from 'qrcode';
-import { Loader2, CheckCircle2, UserPlus, Download, Upload, Image as ImageIcon, X, Camera, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle2, UserPlus, Download, Upload, Image as ImageIcon, X, Camera, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -36,6 +36,7 @@ const formSchema = z.object({
   parent_email: z.string().email('Invalid parent email'),
   parent_phone: z.string().min(10, 'Invalid phone number'),
   photo_url: z.string().url('Invalid photo URL').optional().or(z.literal('')),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
   valid_until: z.string().min(1, 'Validity date is required'),
 });
 
@@ -43,6 +44,7 @@ export function StudentRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [registeredStudent, setRegisteredStudent] = useState<Student | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,6 +62,7 @@ export function StudentRegistration() {
       parent_email: '',
       parent_phone: '',
       photo_url: '',
+      password: '',
       valid_until: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
     },
   });
@@ -253,13 +256,14 @@ export function StudentRegistration() {
       parent_email: '',
       parent_phone: '',
       photo_url: '',
+      password: '',
       valid_until: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
     });
   };
 
   if (registeredStudent) {
     return (
-      <div className="max-w-2xl mx-auto p-12 bg-white/40 backdrop-blur-3xl rounded-[48px] border border-white shadow-2xl text-center space-y-10 animate-in fade-in zoom-in duration-700 relative overflow-hidden">
+      <div className="max-w-2xl mx-auto p-6 sm:p-12 bg-white/40 backdrop-blur-3xl rounded-[32px] sm:rounded-[48px] border border-white shadow-2xl text-center space-y-8 sm:space-y-10 animate-in fade-in zoom-in duration-700 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-[#8424bd]/10 blur-3xl rounded-full -mr-20 -mt-20" />
         
         <div className="flex justify-center relative z-10">
@@ -278,7 +282,7 @@ export function StudentRegistration() {
           <p className="text-slate-500 font-bold text-lg uppercase tracking-tight">System Identity Provisioned</p>
         </div>
 
-        <div className="bg-white/60 backdrop-blur-xl rounded-[40px] p-10 border border-white shadow-xl shadow-slate-200/40 space-y-6 group relative z-10 hover:-translate-y-1 transition-transform duration-500">
+        <div className="bg-white/60 backdrop-blur-xl rounded-[32px] sm:rounded-[40px] p-6 sm:p-10 border border-white shadow-xl shadow-slate-200/40 space-y-6 group relative z-10 hover:-translate-y-1 transition-transform duration-500">
            {registeredStudent.photo_url && (
              <div className="flex justify-center mb-6">
                <img src={registeredStudent.photo_url} className="w-32 h-32 rounded-[32px] object-cover border-4 border-white shadow-lg" alt="" />
@@ -325,7 +329,7 @@ export function StudentRegistration() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-10 bg-white/40 backdrop-blur-3xl rounded-[48px] border border-white shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden">
+    <div className="max-w-2xl mx-auto p-6 sm:p-10 bg-white/40 backdrop-blur-3xl rounded-[32px] sm:rounded-[48px] border border-white shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-32 h-32 bg-[#8424bd]/5 blur-3xl rounded-full -ml-16 -mt-16" />
       
       <div className="flex items-center gap-5 mb-10 relative z-10">
@@ -342,7 +346,7 @@ export function StudentRegistration() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 relative z-10">
           {/* Photo Upload / Capture Section */}
           <div className="relative group">
-            <div className="flex flex-col items-center justify-center min-h-[240px] border-2 border-dashed border-slate-200 rounded-[40px] bg-white/60 backdrop-blur-md hover:bg-white/80 transition-all overflow-hidden shadow-inner cursor-default group-hover:border-[#8424bd]/30">
+            <div className="flex flex-col items-center justify-center min-h-[200px] sm:min-h-[240px] border-2 border-dashed border-slate-200 rounded-[32px] sm:rounded-[40px] bg-white/60 backdrop-blur-md hover:bg-white/80 transition-all overflow-hidden shadow-inner cursor-default group-hover:border-[#8424bd]/30">
               {isCameraActive ? (
                 <div className="relative w-full h-full flex flex-col items-center">
                   <motion.video 
@@ -351,75 +355,75 @@ export function StudentRegistration() {
                     ref={videoRef} 
                     autoPlay 
                     playsInline 
-                    className="w-full max-h-[400px] object-cover rounded-[32px] shadow-2xl border-4 border-white" 
+                    className="w-full max-h-[300px] sm:max-h-[400px] object-cover rounded-[24px] sm:rounded-[32px] shadow-2xl border-4 border-white" 
                   />
                   <div className="absolute bottom-6 flex gap-4">
-                    <Button type="button" onClick={capturePhoto} className="h-14 w-14 rounded-2xl p-0 bg-[#8424bd] hover:bg-[#6c1d9b] shadow-2xl shadow-purple-300">
-                      <Camera className="w-7 h-7" />
+                    <Button type="button" onClick={capturePhoto} className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl p-0 bg-[#8424bd] hover:bg-[#6c1d9b] shadow-2xl shadow-purple-300">
+                      <Camera className="w-6 h-6 sm:w-7 sm:h-7" />
                     </Button>
-                    <Button type="button" variant="outline" onClick={stopCamera} className="h-14 w-14 rounded-2xl p-0 bg-white shadow-2xl border-white hover:bg-slate-50">
-                      <X className="w-7 h-7 text-red-500" />
+                    <Button type="button" variant="outline" onClick={stopCamera} className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl p-0 bg-white shadow-2xl border-white hover:bg-slate-50">
+                      <X className="w-6 h-6 sm:w-7 sm:h-7 text-red-500" />
                     </Button>
                   </div>
                   <canvas ref={canvasRef} className="hidden" />
                 </div>
               ) : filePreview ? (
-                <div className="relative w-48 h-48 group/preview">
+                <div className="relative w-40 h-40 sm:w-48 sm:h-48 group/preview">
                   <motion.img 
                     initial={{ scale: 0.8 }}
                     animate={{ scale: 1 }}
                     src={filePreview} 
                     alt="Preview" 
-                    className="w-full h-full object-cover rounded-[32px] border-4 border-white shadow-2xl ring-8 ring-[#8424bd]/5" 
+                    className="w-full h-full object-cover rounded-[24px] sm:rounded-[32px] border-4 border-white shadow-2xl ring-8 ring-[#8424bd]/5" 
                   />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/preview:opacity-100 transition-opacity rounded-[32px] flex items-center justify-center gap-3 backdrop-blur-sm">
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/preview:opacity-100 transition-opacity rounded-[24px] sm:rounded-[32px] flex items-center justify-center gap-3 backdrop-blur-sm">
                     <button
                       type="button"
                       onClick={() => {
                         setFilePreview(null);
                         form.setValue('photo_url', '');
                       }}
-                      className="w-10 h-10 bg-white/20 backdrop-blur-md text-white rounded-2xl flex items-center justify-center hover:bg-rose-500 transition-all hover:scale-110"
+                      className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-md text-white rounded-2xl flex items-center justify-center hover:bg-rose-500 transition-all hover:scale-110"
                     >
                       <X className="w-5 h-5" />
                     </button>
                     <button
                       type="button"
                       onClick={startCamera}
-                      className="w-10 h-10 bg-white/20 backdrop-blur-md text-white rounded-2xl flex items-center justify-center hover:bg-[#8424bd] transition-all hover:scale-110"
+                      className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-md text-white rounded-2xl flex items-center justify-center hover:bg-[#8424bd] transition-all hover:scale-110"
                     >
                       <RefreshCw className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-8 p-10">
-                  <div className="flex gap-6">
+                <div className="flex flex-col items-center gap-6 p-6 sm:p-10">
+                  <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="group/btn flex flex-col items-center gap-4 p-6 rounded-[32px] bg-white shadow-xl shadow-slate-200/40 border border-slate-100 hover:border-[#8424bd]/40 transition-all w-36 hover:-translate-y-1"
+                      className="group/btn flex flex-col items-center gap-4 p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-white shadow-xl shadow-slate-200/40 border border-slate-100 hover:border-[#8424bd]/40 transition-all w-32 sm:w-36 hover:-translate-y-1"
                       disabled={isUploading}
                     >
-                      <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center group-hover/btn:bg-purple-50 transition-colors">
-                        <Upload className="w-6 h-6 text-slate-400 group-hover/btn:text-[#8424bd]" />
+                      <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 flex items-center justify-center group-hover/btn:bg-purple-50 transition-colors">
+                        <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400 group-hover/btn:text-[#8424bd]" />
                       </div>
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Browse Storage</span>
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Browse</span>
                     </button>
                     <button
                       type="button"
                       onClick={startCamera}
-                      className="group/btn flex flex-col items-center gap-4 p-6 rounded-[32px] bg-white shadow-xl shadow-slate-200/40 border border-slate-100 hover:border-[#8424bd]/40 transition-all w-36 hover:-translate-y-1"
+                      className="group/btn flex flex-col items-center gap-4 p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-white shadow-xl shadow-slate-200/40 border border-slate-100 hover:border-[#8424bd]/40 transition-all w-32 sm:w-36 hover:-translate-y-1"
                       disabled={isUploading}
                     >
-                      <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center group-hover/btn:bg-purple-50 transition-colors">
-                        <Camera className="w-6 h-6 text-slate-400 group-hover/btn:text-[#8424bd]" />
+                      <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 flex items-center justify-center group-hover/btn:bg-purple-50 transition-colors">
+                        <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400 group-hover/btn:text-[#8424bd]" />
                       </div>
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Capture LIVE</span>
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Capture</span>
                     </button>
                   </div>
                   <div className="text-center">
-                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">AUTHENTIC STUDENT PHOTO REQUIRED</p>
+                    <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em]">PHOTO REQUIRED</p>
                   </div>
                 </div>
               )}
@@ -536,6 +540,33 @@ export function StudentRegistration() {
             />
             <FormField
               control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Portal Password</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input 
+                        placeholder="••••••••" 
+                        type={showPassword ? "text" : "password"} 
+                        {...field} 
+                        className="rounded-[20px] h-14 bg-white/80 border-slate-100 focus:ring-4 focus:ring-purple-50 font-bold px-6" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#8424bd]"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage className="ml-4" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="valid_until"
               render={({ field }) => (
                 <FormItem>
@@ -549,7 +580,7 @@ export function StudentRegistration() {
             />
           </div>
 
-          <Button type="submit" className="w-full h-18 rounded-[28px] bg-slate-900 hover:bg-[#8424bd] text-white font-black text-sm tracking-[0.2em] uppercase shadow-2xl shadow-slate-300 hover:shadow-purple-300 transition-all duration-500 active:scale-95 group overflow-hidden" disabled={isSubmitting || isUploading || isCameraActive}>
+          <Button type="submit" className="w-full h-14 sm:h-18 rounded-[20px] sm:rounded-[28px] bg-slate-900 hover:bg-[#8424bd] text-white font-black text-xs tracking-[0.2em] uppercase shadow-2xl shadow-slate-300 hover:shadow-purple-300 transition-all duration-500 active:scale-95 group overflow-hidden" disabled={isSubmitting || isUploading || isCameraActive}>
             {isSubmitting ? (
               <div className="flex items-center gap-3">
                 <Loader2 className="h-5 w-5 animate-spin" />

@@ -13,7 +13,8 @@ export function AttendanceLogs() {
   const loadRecords = useCallback(async () => {
     try {
       const data = await getAttendanceRecords();
-      setRecords(data);
+      const recordsArray = Array.isArray(data) ? data : (data.history || []);
+      setRecords(recordsArray);
     } catch (error) {
       console.error('Error loading records:', error);
     } finally {
@@ -57,8 +58,8 @@ export function AttendanceLogs() {
             Verifying Student Credentials in Real-time
           </p>
         </div>
-        <div className="flex flex-wrap gap-4 w-full lg:w-auto">
-          <div className="relative flex-1 min-w-[300px]">
+        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+          <div className="relative w-full sm:flex-1 lg:min-w-[400px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#8424bd] transition-colors" />
             <Input
               placeholder="Filter by name, course, or roll..."
@@ -67,7 +68,7 @@ export function AttendanceLogs() {
               className="pl-11 h-13 rounded-2xl border-slate-100 bg-white shadow-sm focus:ring-2 focus:ring-purple-100 transition-all font-medium"
             />
           </div>
-          <div className="relative w-full sm:w-48">
+          <div className="relative w-full sm:w-auto lg:w-48">
             <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <Input
               type="date"

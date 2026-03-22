@@ -5,7 +5,9 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'teacher' | 'student';
+  role: 'admin' | 'teacher' | 'student' | 'staff';
+  monthlyPresenceCount?: number;
+  totalPresenceCount?: number;
 }
 
 interface AuthContextType {

@@ -21,4 +21,17 @@ api.interceptors.request.use(
   }
 );
 
+export const staffApi = {
+  clockIn: () => api.post('/staff/clock-in'),
+  clockOut: () => api.post('/staff/clock-out'),
+  getTodayStatus: () => api.get('/staff/status/today'),
+  getAttendance: (month?: number, year?: number) => 
+    api.get('/staff/attendance', { params: { month, year } }),
+  getAllStaff: (month?: string) => api.get(month ? `/staff/all?month=${month}` : '/staff/all'),
+  getStaffAttendance: (staffId: string, month?: number, year?: number) => 
+    api.get(`/staff/attendance/${staffId}`, { params: { month, year } }),
+  updateStaff: (id: string, data: any) => api.put(`/staff/${id}`, data),
+  deleteStaff: (id: string) => api.delete(`/staff/${id}`),
+};
+
 export default api;

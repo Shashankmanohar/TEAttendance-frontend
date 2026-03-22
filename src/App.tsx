@@ -15,6 +15,9 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AttendanceScanner from "./pages/AttendanceScanner";
+import StaffDashboard from "@/pages/StaffDashboard";
+import AdminStaffManagement from "@/pages/AdminStaffManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,19 +42,21 @@ function AppLayout() {
 
   // Use includes for status to handle any sub-routes if needed later
   const isStatusPage = location.pathname.toLowerCase().includes('status');
-  const hideSidebar = isStatusPage || (isFullPage && location.pathname === '/');
+  const isLoginPage = location.pathname === '/' || location.pathname === '/login';
+  const hideSidebar = isStatusPage || isLoginPage || isFullPage;
 
   return (
-    <div className="min-h-screen bg-background transition-all duration-500">
+    <div className="min-h-screen bg-background transition-all duration-500 selection:bg-purple-100 selection:text-purple-600">
       {!hideSidebar && <Navigation />}
-      <main className={hideSidebar ? "w-full" : "md:ml-[260px]"}>
+      <main className={hideSidebar ? "w-full" : "md:ml-[280px]"}>
         <Routes>
-          <Route path="/" element={
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Index />} /> {/* Redirecting /login to / */}
+          <Route path="/admin/scanner" element={
             <ProtectedRoute>
-              <Index />
+              <AttendanceScanner />
             </ProtectedRoute>
           } />
-          <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
@@ -67,9 +72,14 @@ function AppLayout() {
               <Students />
             </ProtectedRoute>
           } />
-          <Route path="/logs" element={
+          <Route path="/staff/dashboard" element={
             <ProtectedRoute>
-              <Logs />
+              <StaffDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/staff" element={
+            <ProtectedRoute>
+              <AdminStaffManagement />
             </ProtectedRoute>
           } />
           <Route path="/status" element={<AttendanceStatus />} />

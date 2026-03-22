@@ -138,10 +138,10 @@ export function QRScanStep() {
       {/* Top Section: Placeholders or Active Info */}
       <div className="w-full flex justify-between items-center text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
         <div className="px-5 py-3 bg-white/60 rounded-[20px] border border-white flex items-center gap-2.5 shadow-sm">
-          ROLL ID : <span className="text-slate-900 font-black">{scanResult ? scanResult.student.roll_number : '-------'}</span>
+          ID : <span className="text-slate-900 font-black">{scanResult ? scanResult.student.roll_number : '-------'}</span>
         </div>
         <div className="px-5 py-3 bg-white/60 rounded-[20px] border border-white flex items-center gap-2.5 shadow-sm">
-          VALIDITY : <span className="text-[#8424bd] font-black">{scanResult ? (new Date(scanResult.student.valid_until || '').toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })) : '--/--/--'}</span>
+          VALIDITY : <span className="text-[#8424bd] font-black">{scanResult && scanResult.student.valid_until ? (new Date(scanResult.student.valid_until).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })) : '--/--/--'}</span>
         </div>
       </div>
 
@@ -254,7 +254,7 @@ export function QRScanStep() {
               </div>
               <div>
                 <h3 className="font-black text-2xl leading-none mb-2 tracking-tight">
-                  {scanResult ? 'SUCCESS' : 'READY TO SCAN'}
+                  {scanResult ? (scanResult.record.type === 'staff' ? 'STAFF RECOGNIZED' : 'SUCCESS') : 'READY TO SCAN'}
                 </h3>
                 <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] inline-block bg-white/10 border border-white/20 backdrop-blur-sm`}>
                   {scanResult ? scanResult.message : 'Position QR for Detection'}

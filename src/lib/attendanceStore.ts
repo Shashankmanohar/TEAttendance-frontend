@@ -18,6 +18,8 @@ export interface Student {
   registered_at: string;
   qr_payload: StudentQRPayload;
   qr_code_data_url: string;
+  monthlyPresenceCount?: number;
+  totalPresenceCount?: number;
 }
 
 export interface AttendanceRecord {
@@ -31,6 +33,7 @@ export interface AttendanceRecord {
   date: string;
   status: string;
   face_image_url?: string;
+  type?: 'student' | 'staff';
 }
 
 export interface MarkAttendanceResult {
@@ -48,8 +51,9 @@ export interface MarkAttendanceResult {
 
 // ──── API Calls ────
 
-export async function getStudents(): Promise<Student[]> {
-  const { data } = await api.get('students');
+export async function getStudents(month?: string): Promise<Student[]> {
+  const url = month ? `students?month=${month}` : 'students';
+  const { data } = await api.get(url);
   return data;
 }
 
@@ -68,6 +72,15 @@ export async function updateStudent(id: string, updateData: any): Promise<Studen
   return data;
 }
 
+export const getStudentAttendance = async (id: string, month?: string, year?: string) => {
+  let url = `/students/${id}/attendance`;
+  if (month && year) {
+    url += `?month=${month}&year=${year}`;
+  }
+  const response = await api.get(url);
+  return response.data;
+};
+
 export async function deleteStudent(id: string): Promise<any> {
   const { data } = await api.delete(`students/${id}`);
   return data;
@@ -82,6 +95,8 @@ export async function markAttendance(payload: any): Promise<MarkAttendanceResult
   try {
     const { data } = await api.post('attendance/clock-in', {
       roll_number: payload.roll_number || payload.rollNumber || payload.studentId,
+      staff_id: payload.staff_id,
+      type: payload.type,
       class_id: payload.class_id || payload.classId || 'default',
       course: payload.course || ''
     });
@@ -121,7 +136,12 @@ export async function getLatestAttendance(): Promise<LatestAttendanceResult> {
   return data;
 }
 
-export async function getAttendanceRecords(date?: string): Promise<AttendanceRecord[]> {
+export interface AttendanceHistoryResponse {
+  history: AttendanceRecord[];
+  monthlyPresenceCount: number;
+}
+
+export async function getAttendanceRecords(date?: string): Promise<AttendanceHistoryResponse | AttendanceRecord[]> {
   const url = date ? `attendance/history?date=${date}` : 'attendance/history';
   const { data } = await api.get(url);
   return data;
